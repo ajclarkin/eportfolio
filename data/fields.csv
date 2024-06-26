@@ -1,0 +1,8 @@
+field_id,form_id,name,label,type,order_num,required,options,validation_rules
+1,1,description_of_case,Description of case,textarea,1,1,,
+2,1,observed_by,Observed by,text,2,1,,
+3,1,date,Date,date,3,1,,
+4,1,summary_of_discussion,Summary of Discussion,textarea,4,1,,
+5,1,cf_reflections,CF Reflections,textarea,5,1,,
+6,1,examples_of_good_practice,Examples of good practice,textarea,6,1,,
+

@@ -6,6 +6,8 @@ RUN pip3 install gunicorn
 
 RUN pip3 install python-dateutil
 
+RUN pip3 install Flask-WTF
+
 WORKDIR /flask
 
 ENTRYPOINT ["./gunicorn.sh"]
