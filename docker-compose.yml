@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    image: flask
+    container_name: eportfolio 
+    ports:
+      - "8011:80"
+    volumes:
+      - ./:/flask
+    networks:
+      - nginx-proxy-manager_default
+    restart: unless-stopped
+
+networks:
+  nginx-proxy-manager_default:
+    external: true
+    name: nginx-proxy-manager_default
