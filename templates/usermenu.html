@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Welcome to the Assessment Portal</h1>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="mb-3">Select an Assessment Type</h2>
+            <div class="list-group mb-4">
+                <a href="{{ url_for('assessment_form', type='type1') }}" class="list-group-item list-group-item-action">
+                    Assessment Type 1
+                </a>
+                <a href="{{ url_for('assessment_form', type='type2') }}" class="list-group-item list-group-item-action">
+                    Assessment Type 2
+                </a>
+                <a href="{{ url_for('assessment_form', type='type3') }}" class="list-group-item list-group-item-action">
+                    Assessment Type 3
+                </a>
+                <a href="{{ url_for('assessment_form', type='type4') }}" class="list-group-item list-group-item-action">
+                    Assessment Type 4
+                </a>
+            </div>
+
+            <h2 class="mb-3">Previous Assessments</h2>
+            <a href="{{ url_for('view_previous_assessments') }}" class="btn btn-primary btn-lg btn-block">
+                View Previous Assessments
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
