@@ -3,8 +3,8 @@ CREATE TABLE Forms (
     form_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_DATE,
+    updated_at TIMESTAMP DEFAULT CURRENT_DATE
 );
 
 -- Create the Fields table
@@ -25,8 +25,9 @@ CREATE TABLE Fields (
 CREATE TABLE FormSubmissions (
     submission_id INTEGER PRIMARY KEY AUTOINCREMENT,
     form_id INTEGER,
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    submitted_at TIMESTAMP DEFAULT CURRENT_DATE,
     user_id INTEGER,
+    complete BOOLEAN,
     FOREIGN KEY (form_id) REFERENCES Forms(form_id)
 );
 

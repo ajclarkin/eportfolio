@@ -11,21 +11,42 @@
                 <a href="{{ url_for('handle_form', form_id='1') }}" class="list-group-item list-group-item-action">
                     Assessment Type 1
                 </a>
-                <a href="{{ url_for('assessment_form', type='type2') }}" class="list-group-item list-group-item-action">
+                <a href="{{ url_for('handle_form', form_id='2') }}" class="list-group-item list-group-item-action">
                     Assessment Type 2
                 </a>
-                <a href="{{ url_for('assessment_form', type='type3') }}" class="list-group-item list-group-item-action">
+                <a href="{{ url_for('handle_form', form_id='3') }}" class="list-group-item list-group-item-action">
                     Assessment Type 3
                 </a>
-                <a href="{{ url_for('assessment_form', type='type4') }}" class="list-group-item list-group-item-action">
+                <a href="{{ url_for('handle_form', form_id='4') }}" class="list-group-item list-group-item-action">
                     Assessment Type 4
                 </a>
             </div>
 
-            <h2 class="mb-3">Previous Assessments</h2>
-            <a href="{{ url_for('view_previous_assessments') }}" class="btn btn-primary btn-lg btn-block">
-                View Previous Assessments
-            </a>
+
+
+
+              <h2 class="mb-3">Previous Assessments</h2>
+      <table>
+    <!--<caption>People</caption>-->
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Assessment</th>
+        <th>Observer</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in data %}
+        <tr>
+        <td data-label="Date">{{ row['submitted'] }}</td>
+        <td data-label="Assessment">{{ row['description'] }}</td>
+            <!--observer doesn't work currently - not passed to table-->
+        <td data-label="Observer">{{ row['observer'] }}</td>
+          </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
         </div>
     </div>
 </div>

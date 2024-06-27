@@ -100,9 +100,9 @@ def store_form_submission(form_id, form_data):
     try:
         # Insert into FormSubmissions table
         cursor.execute('''
-            INSERT INTO FormSubmissions (form_id, submitted_at)
-            VALUES (?, ?)
-        ''', (form_id, datetime.now()))
+            INSERT INTO FormSubmissions (form_id, submitted_at, user_id)
+            VALUES (?, ?, ?)
+        ''', (form_id, datetime.now(), request.headers.get('Remote-User')))
         
         submission_id = cursor.lastrowid
 
@@ -152,17 +152,30 @@ def handle_form(form_id):
 
 
 @app.route('/')
-def hello():
+def index():
     user = request.headers.get('Remote-User')
     email = request.headers.get('Remote-Email')
     groups = [g for g in request.headers.get('Remote-Groups').split(',')]
 
     if 'eportfolio-user' in groups:
-        return render_template('usermenu.html')
+        conn = sqlite3.connect('data/data.db')
+        # The following row required in order to address output data by column name
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        # To add the observer here would require some complicated sql
+        cursor.execute('''
+            select fs.submission_id, strftime('%d-%m-%Y', fs.submitted_at) as submitted, f.description 
+            from formsubmissions fs 
+                inner join forms f on fs.form_id = f.form_id
+            where user_id = ?''',
+            (user,)
+        )
+        return render_template('usermenu.html', data = cursor.fetchall())
     else:
         return f"<p>Hello world</p>{groups}"
 
 
 
-
-
+@app.route('/placeholder')
+def view_previous_assessments():
+    pass
