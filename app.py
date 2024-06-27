@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, url_for, flash, redirect
 from datetime import datetime
 import sqlite3
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField, SelectField, DateField, TextAreaField, RadioField
+from wtforms import StringField, SubmitField, IntegerField, SelectField, DateField, TextAreaField, RadioField, HiddenField
 from wtforms.validators import DataRequired, Optional
 
 app = Flask(__name__)
@@ -13,6 +13,38 @@ def get_db_connection():
     conn = sqlite3.connect('data/data.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+
+class DynamicForm(FlaskForm):
+#    trainee_id = HiddenField('Trainee ID')
+#    observer_id = SelectField('Observer', validators=[DataRequired()])
+
+    @classmethod
+    def create(cls, fields, observers):
+        class DynamicFormClass(cls):
+            pass
+
+        for field in fields:
+            field_id = str(field['field_id'])
+            if field['type'] == 'text':
+                setattr(DynamicFormClass, field_id, StringField(field['label'], validators=[DataRequired() if field['required'] else None]))
+            elif field['type'] == 'number':
+                setattr(DynamicFormClass, field_id, IntegerField(field['label'], validators=[DataRequired() if field['required'] else None]))
+            elif field['type'] == 'email':
+                setattr(DynamicFormClass, field_id, StringField(field['label'], validators=[DataRequired() if field['required'] else None, Email()]))
+            elif field['type'] == 'textarea':
+                setattr(DynamicFormClass, field_id, TextAreaField(field['label'], validators=[DataRequired() if field['required'] else None]))
+            elif field['type'] == 'select':
+                choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
+                setattr(DynamicFormClass, field_id, SelectField(field['label'], choices=choices, validators=[DataRequired() if field['required'] else None]))
+
+        setattr(DynamicFormClass, 'observer_id', SelectField('Observer', choices=[(str(o['id']), o['fullname']) for o in observers], validators=[DataRequired()]))
+
+        return DynamicFormClass()
+
+def get_observers():
+    # Implement this function to fetch observers from the database
+    pass
 
 
 
@@ -67,15 +99,17 @@ def store_form_submission(form_id, trainee_id, observer_id, field_values):
 
 @app.route('/form/<int:form_id>', methods=['GET', 'POST'])
 def handle_form(form_id):
-    if request.method == 'GET':
-        return generate_form(form_id)
-    elif request.method == 'POST':
-        trainee_id = request.form.get('trainee_id')  # Assume this is provided in the form or from session
-        observer_id = request.form.get('observer_id')  # This should be a field in your form now
+    form_config, fields = get_form_config(form_id)
+    observers = get_observers()
+    
+    form = DynamicForm.create(fields, observers)
+    
+    if form.validate_on_submit():
+        # Process the form data
+        trainee_id = form.trainee_id.data
+        observer_id = form.observer_id.data
         
-        # Collect all field values
-        field_values = {field: value for field, value in request.form.items() 
-                        if field not in ['trainee_id', 'observer_id']}
+        field_values = {field['field_id']: form[str(field['field_id'])].data for field in fields}
         
         submission_id = store_form_submission(form_id, trainee_id, observer_id, field_values)
         
@@ -83,6 +117,9 @@ def handle_form(form_id):
             return redirect(url_for('submission_success', submission_id=submission_id))
         else:
             return "An error occurred while submitting the form.", 500
+
+    return render_template('form_template.html', form=form, form_config=form_config)
+
 
 
 @app.route('/submission_success/<int:submission_id>')
