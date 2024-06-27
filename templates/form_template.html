@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12 col-md-8 col-md-offset-2">
+            <h1>{{ form['name'] }}</h1>
+            <p>{{ form['description'] }}</p>
+            
+            <form method="POST">
+                <input type="hidden" name="trainee_id" value="{{ trainee_id }}">
+                
+                <div class="form-group">
+                    <label for="observer_id">Observer:</label>
+                    <select name="observer_id" required>
+                        <option value="">Select an observer</option>
+                        {% for observer in observers %}
+                            <option value="{{ observer.id }}">{{ observer.fullname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {% for field in fields %}
+                    <div class="form-group">
+                        <label for="{{ field['name'] }}">{{ field['label'] }}:</label>
+                        
+                        {% if field['type'] == 'text' %}
+                            <input type="text" id="{{ field['name'] }}" name="{{ field['field_id'] }}" 
+                                   {% if field['required'] %}required{% endif %}>
+                        
+                        {% elif field['type'] == 'number' %}
+                            <input type="number" id="{{ field['name'] }}" name="{{ field['field_id'] }}"
+                                   {% if field['required'] %}required{% endif %}>
+                        
+                        {% elif field['type'] == 'email' %}
+                            <input type="email" id="{{ field['name'] }}" name="{{ field['field_id'] }}"
+                                   {% if field['required'] %}required{% endif %}>
+                        
+                        {% elif field['type'] == 'textarea' %}
+                            <textarea id="{{ field['name'] }}" name="{{ field['field_id'] }}"
+                                      {% if field['required'] %}required{% endif %}></textarea>
+                        
+                        {% elif field['type'] == 'select' %}
+                            <select id="{{ field['name'] }}" name="{{ field['field_id'] }}"
+                                    {% if field['required'] %}required{% endif %}>
+                                <option value="">Select an option</option>
+                                {% for option in field['options'].split(',') %}
+                                    <option value="{{ option.strip() }}">{{ option.strip() }}</option>
+                                {% endfor %}
+                            </select>
+                        
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <div class="form-group">
+                    <button type="submit" class="primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

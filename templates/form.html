@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ form_config.name }}{% endblock %}
+{% block title %}{{ fields.name }}{% endblock %}
 
 {% block content %}
-<h1>{{ form_config.name }}</h1>
-<p>{{ form_config.description }}</p>
+<h1>{{ fields.name }}</h1>
+<p>{{ fields.description }}</p>
 
-<form method="POST" action="{{ url_for('handle_form', form_id=form_config.form_id) }}" enctype="multipart/form-data">
+<form>
+<!--<form method="POST" action="{{ url_for('handle_form', form_id=fields.form_id) }}" enctype="multipart/form-data">-->
     {{ form.hidden_tag() }}
     
     {% for field in form %}
