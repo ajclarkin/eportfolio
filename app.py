@@ -16,8 +16,8 @@ def get_db_connection():
 
 
 class DynamicForm(FlaskForm):
-#    trainee_id = HiddenField('Trainee ID')
-#    observer_id = SelectField('Observer', validators=[DataRequired()])
+    trainee_id = HiddenField('Trainee ID')
+    observer_id = SelectField('Observer', validators=[DataRequired()])
 
     @classmethod
     def create(cls, fields, observers):
@@ -25,26 +25,38 @@ class DynamicForm(FlaskForm):
             pass
 
         for field in fields:
-            field_id = str(field['field_id'])
+            field_name = f"field_{field['field_id']}"
+            validators = [DataRequired()] if field.get('required') else [Optional()]
+            
             if field['type'] == 'text':
-                setattr(DynamicFormClass, field_id, StringField(field['label'], validators=[DataRequired() if field['required'] else None]))
+                setattr(DynamicFormClass, field_name, StringField(field['label'], validators=validators))
             elif field['type'] == 'number':
-                setattr(DynamicFormClass, field_id, IntegerField(field['label'], validators=[DataRequired() if field['required'] else None]))
+                setattr(DynamicFormClass, field_name, IntegerField(field['label'], validators=validators))
             elif field['type'] == 'email':
-                setattr(DynamicFormClass, field_id, StringField(field['label'], validators=[DataRequired() if field['required'] else None, Email()]))
+                validators.append(Email())
+                setattr(DynamicFormClass, field_name, StringField(field['label'], validators=validators))
             elif field['type'] == 'textarea':
-                setattr(DynamicFormClass, field_id, TextAreaField(field['label'], validators=[DataRequired() if field['required'] else None]))
+                setattr(DynamicFormClass, field_name, TextAreaField(field['label'], validators=validators))
             elif field['type'] == 'select':
                 choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
-                setattr(DynamicFormClass, field_id, SelectField(field['label'], choices=choices, validators=[DataRequired() if field['required'] else None]))
+                setattr(DynamicFormClass, field_name, SelectField(field['label'], choices=choices, validators=validators))
 
-        setattr(DynamicFormClass, 'observer_id', SelectField('Observer', choices=[(str(o['id']), o['fullname']) for o in observers], validators=[DataRequired()]))
+        setattr(DynamicFormClass, 'observer_id', SelectField('Observer', choices))
 
-        return DynamicFormClass()
+
+
+
 
 def get_observers():
-    # Implement this function to fetch observers from the database
-    pass
+    conn = get_db_connection()
+    observers = conn.execute('SELECT id, fullname FROM Users WHERE role = ?', ('observer',)).fetchall()
+    conn.close()
+    
+    # Convert SQLite Row objects to dictionaries
+    observers = [dict(observer) for observer in observers]
+    
+    return observers
+
 
 
 
@@ -53,9 +65,14 @@ def get_form_config(form_id):
     form = conn.execute('SELECT * FROM Forms WHERE form_id = ?', (form_id,)).fetchone()
     fields = conn.execute('SELECT * FROM Fields WHERE form_id = ? ORDER BY order_num', (form_id,)).fetchall()
     conn.close()
-    print(f"form: {form}") 
-    print(f"field: {fields}") 
+    
+    # Convert SQLite Row objects to dictionaries
+    form = dict(form) if form else None
+    fields = [dict(field) for field in fields]
+    
     return form, fields
+
+
 
 
 
@@ -102,6 +119,9 @@ def handle_form(form_id):
     form_config, fields = get_form_config(form_id)
     observers = get_observers()
     
+    if not form_config:
+        return "Form not found", 404
+    
     form = DynamicForm.create(fields, observers)
     
     if form.validate_on_submit():
@@ -119,6 +139,7 @@ def handle_form(form_id):
             return "An error occurred while submitting the form.", 500
 
     return render_template('form_template.html', form=form, form_config=form_config)
+
 
 
 
