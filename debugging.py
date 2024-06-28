@@ -2,11 +2,12 @@ from flask import Flask, request, render_template, url_for, flash, redirect
 from datetime import datetime
 import sqlite3
 from flask_wtf import FlaskForm
-from wtforms import DateField, RadioField, StringField, SubmitField, IntegerField, SelectField, TextAreaField, HiddenField
+from wtforms import StringField, SubmitField, IntegerField, SelectField, TextAreaField, HiddenField
 from wtforms.validators import DataRequired, Optional, Email
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
+app.app_context()
 
 def get_db_connection():
     conn = sqlite3.connect('data/data.db')
@@ -37,13 +38,8 @@ class DynamicForm(FlaskForm):
                 setattr(DynamicFormClass, field_name, IntegerField(field['label'], validators=validators))
             elif field['type'] == 'email':
                 setattr(DynamicFormClass, field_name, StringField(field['label'], validators=validators))
-            elif field['type'] == 'date':
-                setattr(DynamicFormClass, field_name, DateField(field['label'], validators=validators))
             elif field['type'] == 'textarea':
                 setattr(DynamicFormClass, field_name, TextAreaField(field['label'], validators=validators))
-            elif field['type'] == 'radio':
-                choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
-                setattr(DynamicFormClass, field_name, RadioField(field['label'], choices=choices, validators=validators))
             elif field['type'] == 'select':
                 choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
                 setattr(DynamicFormClass, field_name, SelectField(field['label'], choices=choices, validators=validators))
@@ -96,58 +92,33 @@ def store_form_submission(form_id, trainee_id, observer_id, field_values):
         conn.close()
 
 
-@app.route('/form/<int:form_id>', methods=['GET', 'POST'])
-def handle_form(form_id):
-    form_config, fields = get_form_config(form_id)
-    observers = get_observers()
+form_id = 1
+form_config, fields = get_form_config(form_id)
+observers = get_observers()
 
-    if not form_config:
-        return "Form not found", 404
+print(f"form_config: {form_config}\n")
+print(f"fields: {fields}\n")
+print(f"observers: {observers}\n")
+#form = DynamicForm.create(fields, observers)
 
-    form = DynamicForm.create(fields, observers)
-
-    if form.validate_on_submit():
-        trainee_id = request.headers.get('Remote-User')  # Get trainee_id from headers
-        observer_id = form.observer_id.data
-        field_values = {field['field_id']: form[f"field_{field['field_id']}"].data for field in fields}
-        
-        submission_id = store_form_submission(form_id, trainee_id, observer_id, field_values)
-
-        if submission_id:
-            flash('Form submitted successfully', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('An error occurred while submitting the form', 'error')
-
-    return render_template('form_template.html', form=form, form_config=form_config)
-
-
+#print(form)
+#if form.validate_on_submit():
+#    trainee_id = request.headers.get('Remote-User')  # Get trainee_id from headers
+#    observer_id = form.observer_id.data
+#    field_values = {field['field_id']: form[f"field_{field['field_id']}"].data for field in fields}
+#    
+#    submission_id = store_form_submission(form_id, trainee_id, observer_id, field_values)
+#
+#    if submission_id:
+#        flash('Form submitted successfully', 'success')
+#        return redirect(url_for('index'))
+#    else:
+#        flash('An error occurred while submitting the form', 'error')
+#
+#return render_template('form_template.html', form=form, form_config=form_config)
 
 
 
 
 
-@app.route('/')
-def index():
-    user = request.headers.get('Remote-User')
-    email = request.headers.get('Remote-Email')
-    groups = request.headers.get('Remote-Groups', '').split(',')
-
-    if 'eportfolio-user' in groups:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT fs.id as submission_id, strftime('%d-%m-%Y', fs.created_at) as submitted, f.description
-            FROM FormSubmissions fs
-            INNER JOIN Forms f ON fs.form_id = f.form_id
-            WHERE fs.trainee_id = ?
-        ''', (user,))
-        submissions = cursor.fetchall()
-        conn.close()
-        return render_template('usermenu.html', submissions=submissions)
-    else:
-        return "Access denied. You must be an eportfolio user to view this page."
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
