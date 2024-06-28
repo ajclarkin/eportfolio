@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center">{{ form_config.name }}</h2>
+    <p class="text-center">{{ form_config.description }}</p>
+
+    <form method="POST" class="form-card">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <div class="col-sm-12 col-md-6">
+                {{ form.observer_id.label(class="label") }}
+                {{ form.observer_id(class="input") }}
+            </div>
+        </div>
+
+        {% for field in form %}
+            {% if field.name != 'csrf_token' and field.name != 'trainee_id' and field.name != 'observer_id' %}
+                <div class="row">
+                    <div class="col-sm-12">
+                        {{ field.label(class="label") }}
+                        {% if field.type == 'TextAreaField' %}
+                            {{ field(class="input", rows=4) }}
+                        {% elif field.type == 'SelectField' %}
+                            {{ field(class="select") }}
+                        {% else %}
+                            {{ field(class="input") }}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="row">
+            <div class="col-sm-12">
+                <input type="submit" value="Submit" class="button primary">
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.querySelector('table tbody');
+    tableBody.addEventListener('click', function(e) {
+      const row = e.target.closest('tr');
+      if (row) {
+        const formId = row.dataset.formId;
+        window.location.href = `/form-details/${formId}`;
+      }
+    });
+  });
+</script>
+{% endblock %}

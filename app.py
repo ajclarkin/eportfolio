@@ -2,152 +2,170 @@ from flask import Flask, request, render_template, url_for, flash, redirect
 from datetime import datetime
 import sqlite3
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField, SelectField, DateField, TextAreaField, RadioField
-from wtforms.validators import DataRequired, Optional
+from wtforms import DateField, RadioField, StringField, SubmitField, IntegerField, SelectField, TextAreaField, HiddenField
+from wtforms.validators import DataRequired, Optional, Email
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
 
+def get_db_connection():
+    conn = sqlite3.connect('data/data.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# This reads the configuration of the specified form and associated fields into variable form_config.
-# This is used to set up the form.
+
+class DynamicForm(FlaskForm):
+    trainee_id = HiddenField('Trainee ID')
+    observer_id = SelectField('Observer', validators=[DataRequired()])
+
+    @classmethod
+    def create(cls, fields, observers):
+        class DynamicFormClass(cls):
+            pass
+
+        # Add observer field first
+#        setattr(DynamicFormClass, 'observer_id', SelectField('Observer', choices=[(str(o['id']), o['fullname']) for o in observers], validators=[DataRequired()]))
+        setattr(DynamicFormClass, 'observer_id', SelectField('Observer', choices=observers))
+
+        for field in fields:
+            field_name = f"field_{field['field_id']}"
+            validators = [DataRequired()] if field.get('required') else [Optional()]
+
+            if field['type'] == 'text':
+                setattr(DynamicFormClass, field_name, StringField(field['label'], validators=validators))
+            elif field['type'] == 'number':
+                setattr(DynamicFormClass, field_name, IntegerField(field['label'], validators=validators))
+            elif field['type'] == 'email':
+                setattr(DynamicFormClass, field_name, StringField(field['label'], validators=validators))
+            elif field['type'] == 'date':
+                setattr(DynamicFormClass, field_name, DateField(field['label'], validators=validators))
+            elif field['type'] == 'textarea':
+                setattr(DynamicFormClass, field_name, TextAreaField(field['label'], validators=validators))
+            elif field['type'] == 'radio':
+                choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
+                setattr(DynamicFormClass, field_name, RadioField(field['label'], choices=choices, validators=validators))
+            elif field['type'] == 'select':
+                choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
+                setattr(DynamicFormClass, field_name, SelectField(field['label'], choices=choices, validators=validators))
+
+        return DynamicFormClass()
+
+
+
+
+def get_observers():
+    conn = get_db_connection()
+    observers = conn.execute('SELECT id, fullname FROM Users WHERE role = ?', ('observer',)).fetchall()
+    conn.close()
+    return [(str(observer['id']), observer['fullname']) for observer in observers]
+
+
 
 def get_form_config(form_id):
-    conn = sqlite3.connect('data/data.db')
-    cursor = conn.cursor()
-
-    # Get form details
-    cursor.execute("SELECT * FROM Forms WHERE form_id = ?", (form_id,))
-    form = cursor.fetchone()
-
-    if not form:
-        conn.close()
-        return None
-
-    # Get fields for the form
-    cursor.execute("SELECT * FROM Fields WHERE form_id = ? ORDER BY order_num", (form_id,))
-    fields = cursor.fetchall()
-
+    conn = get_db_connection()
+    form = conn.execute('SELECT * FROM Forms WHERE form_id = ?', (form_id,)).fetchone()
+    fields = conn.execute('SELECT * FROM Fields WHERE form_id = ? ORDER BY order_num', (form_id,)).fetchall()
     conn.close()
-
-    # Construct the form configuration
-    form_config = {
-        'form_id': form[0],
-        'name': form[1],
-        'description': form[2],
-        'fields': []
-    }
-
-    for field in fields:
-        field_config = {
-            'field_id': field[0],
-            'name': field[2],
-            'label': field[3],
-            'type': field[4],
-            'order': field[5],
-            'required': bool(field[6]),
-            'options': field[7],
-            'validation_rules': field[8]
-        }
-        form_config['fields'].append(field_config)
-
-    return form_config
+    return dict(form) if form else None, [dict(field) for field in fields]
 
 
 
-# This creates the form object which will be inserted into the template document.
-def generate_form(form_config):
-    class DynamicForm(FlaskForm):
-        pass
-
-
-    for field in form_config['fields']:
-        field_type = field['type'].lower()
-
-        validators = [DataRequired()] if field['required'] else [Optional()]
-
-        if field_type == 'text':
-            setattr(DynamicForm, field['name'], StringField(field['label'], validators=validators))
-        elif field_type == 'textarea':
-            setattr(DynamicForm, field['name'], TextAreaField(field['label'], validators=validators))
-        elif field_type == 'number':
-            setattr(DynamicForm, field['name'], IntegerField(field['label'], validators=validators))
-        elif field_type == 'select':
-            choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
-            setattr(DynamicForm, field['name'], SelectField(field['label'], choices=choices, validators=validators))
-        elif field_type == 'date':
-            setattr(DynamicForm, field['name'], DateField(field['label'], validators=validators))
-        elif field_type == 'radio':
-            choices = [(option.strip(), option.strip()) for option in field['options'].split(',')]
-            setattr(DynamicForm, field['name'], RadioField(field['label'], choices=choices, validators=validators))
-        elif field_type == 'checkbox':
-            setattr(DynamicForm, field['name'], BooleanField(field['label'], validators=validators))
-        elif field_type == 'file':
-            setattr(DynamicForm, field['name'], FileField(field['label'], validators=validators))
-        else:
-            setattr(DynamicForm, field['name'], StringField(field['label'], validators=validators))
-
-
-    return DynamicForm
-
-
-
-
-def store_form_submission(form_id, form_data):
-    conn = sqlite3.connect('data/data.db')
+def store_form_submission(form_id, trainee_id, observer_id, field_values):
+    conn = get_db_connection()
     cursor = conn.cursor()
-
     try:
-        # Insert into FormSubmissions table
         cursor.execute('''
-            INSERT INTO FormSubmissions (form_id, submitted_at, user_id)
-            VALUES (?, ?, ?)
-        ''', (form_id, datetime.now(), request.headers.get('Remote-User')))
-        
+            INSERT INTO FormSubmissions (form_id, trainee_id, observer_id, status, created_at, updated_at)
+            VALUES (?, ?, ?, 0, ?, ?)
+        ''', (form_id, trainee_id, observer_id, datetime.now(), datetime.now()))
         submission_id = cursor.lastrowid
 
-        # Insert into FieldValues table
-        for field_name, value in form_data.items():
-            if field_name != 'csrf_token':  # Skip CSRF token
-                # Get field_id from Fields table
-                cursor.execute('SELECT field_id FROM Fields WHERE form_id = ? AND name = ?', (form_id, field_name))
-                field_id = cursor.fetchone()[0]
-
-                cursor.execute('''
-                    INSERT INTO FieldValues (submission_id, field_id, value)
-                    VALUES (?, ?, ?)
-                ''', (submission_id, field_id, str(value)))
+        for field_id, value in field_values.items():
+            cursor.execute('''
+                INSERT INTO FieldValues (submission_id, field_id, value)
+                VALUES (?, ?, ?)
+            ''', (submission_id, field_id, value))
 
         conn.commit()
+        return submission_id
     except sqlite3.Error as e:
-        print(f"An error occurred: {e}")
         conn.rollback()
+        print(f"An error occurred: {e}")
+        return None
     finally:
         conn.close()
 
 
-
-
 @app.route('/form/<int:form_id>', methods=['GET', 'POST'])
 def handle_form(form_id):
-    form_config = get_form_config(form_id)
+    form_config, fields = get_form_config(form_id)
+    observers = get_observers()
+
     if not form_config:
         return "Form not found", 404
 
-    DynamicForm = generate_form(form_config)
-    form = DynamicForm()
+    form = DynamicForm.create(fields, observers)
 
-    if request.method == 'POST' and form.validate_on_submit():
-        # Process form submission
-        store_form_submission(form_id, form.data)
-        flash('Form submitted successfully!', 'success')
-        return redirect(url_for('handle_form', form_id=form_id))
+    if form.validate_on_submit():
+        trainee_id = request.headers.get('Remote-User')  # Get trainee_id from headers
+        observer_id = form.observer_id.data
+        field_values = {field['field_id']: form[f"field_{field['field_id']}"].data for field in fields}
+        
+        submission_id = store_form_submission(form_id, trainee_id, observer_id, field_values)
 
-    # If it's a GET request or form validation failed, display the form
-    return render_template('form.html', form=form, form_config=form_config)
+        if submission_id:
+            flash('Form submitted successfully', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('An error occurred while submitting the form', 'error')
+
+    return render_template('form_template.html', form=form, form_config=form_config)
 
 
 
+@app.route('/view/<int:form_id>')
+def display_form(form_id):
+    groups = [g for g in request.headers.get('Remote-Groups').split(',')]
+    if 'eportfolio-user' not in groups:
+#    if 'user_id' not in session:
+#        return redirect(url_for('login'))
+        return "You're not logged in"
+
+    user = request.headers.get('Remote-User')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Get form details
+    cursor.execute("""
+        SELECT * FROM FormSubmissions
+        WHERE id = ? AND trainee_id = ?
+    """, (form_id, user))
+    form = cursor.fetchone()
+
+    if not form:
+        conn.close()
+        return "Form not found", 404
+
+    # Get form fields and their most recent values
+    cursor.execute("""
+        with formfields as (
+            select row_number() over (partition by field_id order by id desc) as rowno
+            , id, field_id, value 
+            from fieldvalues where submission_id = ?
+        ) 
+        select f.label, ff.value 
+        from formfields ff 
+            inner join fields f on f.field_id = ff.field_id and rowno = 1 
+        order by ff.field_id
+
+    """, (form_id,))
+    
+    fields = cursor.fetchall()
+
+    conn.close()
+
+    return render_template('display_form.html', fields=fields)
 
 
 
@@ -155,27 +173,23 @@ def handle_form(form_id):
 def index():
     user = request.headers.get('Remote-User')
     email = request.headers.get('Remote-Email')
-    groups = [g for g in request.headers.get('Remote-Groups').split(',')]
+    groups = request.headers.get('Remote-Groups', '').split(',')
 
     if 'eportfolio-user' in groups:
-        conn = sqlite3.connect('data/data.db')
-        # The following row required in order to address output data by column name
-        conn.row_factory = sqlite3.Row
+        conn = get_db_connection()
         cursor = conn.cursor()
-        # To add the observer here would require some complicated sql
         cursor.execute('''
-            select fs.submission_id, strftime('%d-%m-%Y', fs.submitted_at) as submitted, f.description 
-            from formsubmissions fs 
-                inner join forms f on fs.form_id = f.form_id
-            where user_id = ?''',
-            (user,)
-        )
-        return render_template('usermenu.html', data = cursor.fetchall())
+            SELECT fs.id as submission_id, strftime('%d-%m-%Y', fs.created_at) as submitted, f.description
+            FROM FormSubmissions fs
+            INNER JOIN Forms f ON fs.form_id = f.form_id
+            WHERE fs.trainee_id = ?
+        ''', (user,))
+        submissions = cursor.fetchall()
+        conn.close()
+        return render_template('usermenu.html', submissions=submissions)
     else:
-        return f"<p>Hello world</p>{groups}"
+        return "Access denied. You must be an eportfolio user to view this page."
 
+if __name__ == '__main__':
+    app.run(debug=True)
 
-
-@app.route('/placeholder')
-def view_previous_assessments():
-    pass

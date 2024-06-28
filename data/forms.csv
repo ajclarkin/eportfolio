@@ -1,6 +1,5 @@
-form_id ,name ,description                             ,created_at          ,updated_at
-      1 ,CEX  ,Clinical Evaluation Exercise            ,2024-06-26 12:00:00 ,2024-06-26 12:00:00
-      2 ,DOPS ,Direct Observation of Procedural Skills ,2024-06-26 12:00:00 ,2024-06-26 12:00:00
-      3 ,CBD  ,Case Based Discussion                   ,2024-06-26 12:00:00 ,2024-06-26 12:00:00
-      4 ,MSF  ,Multi Source Feedback                   ,2024-06-26 12:00:00 ,2024-06-26 12:00:00
-       
+form_id ,name ,description                             
+1 ,CEX  ,Clinical Evaluation Exercise
+2 ,DOPS ,Direct Observation of Procedural Skills
+3 ,CBD  ,Case Based Discussion
+4 ,MSF  ,Multi Source Feedback
