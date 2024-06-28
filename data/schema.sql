@@ -7,8 +7,8 @@ CREATE TABLE Users (
     fullname TEXT NOT NULL,
     role TEXT NOT NULL,
     expiry_date DATE,
-    created_at DATETIME DEFAULT CURRENT_DATE,
-    updated_at DATETIME DEFAULT CURRENT_DATE
+    created_at DATE DEFAULT CURRENT_DATE,
+    updated_at DATE DEFAULT CURRENT_DATE
 );
 
 -- Forms table
@@ -16,8 +16,8 @@ CREATE TABLE Forms (
     form_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
-    created_at DATETIME DEFAULT CURRENT_DATE,
-    updated_at DATETIME DEFAULT CURRENT_DATE
+    created_at DATE DEFAULT CURRENT_DATE,
+    updated_at DATE DEFAULT CURRENT_DATE
 );
 
 -- Fields table
@@ -41,8 +41,8 @@ CREATE TABLE FormSubmissions (
     trainee_id INTEGER NOT NULL,
     observer_id INTEGER NOT NULL,
     status BOOLEAN DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_DATE,
-    updated_at DATETIME DEFAULT CURRENT_DATE,
+    created_at DATE DEFAULT CURRENT_DATE,
+    updated_at DATE DEFAULT CURRENT_DATE,
     FOREIGN KEY (form_id) REFERENCES Forms(form_id),
     FOREIGN KEY (trainee_id) REFERENCES Users(id),
     FOREIGN KEY (observer_id) REFERENCES Users(id)

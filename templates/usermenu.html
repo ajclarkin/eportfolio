@@ -1,54 +1,69 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
+  <div class="container mt-5">
     <h1 class="text-center mb-4">Welcome to the Assessment Portal</h1>
 
     <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <h2 class="mb-3">Select an Assessment Type</h2>
-            <div class="list-group mb-4">
-                <a href="{{ url_for('handle_form', form_id='1') }}" class="list-group-item list-group-item-action">
-                    Assessment Type 1
-                </a>
-                <a href="{{ url_for('handle_form', form_id='2') }}" class="list-group-item list-group-item-action">
-                    Assessment Type 2
-                </a>
-                <a href="{{ url_for('handle_form', form_id='3') }}" class="list-group-item list-group-item-action">
-                    Assessment Type 3
-                </a>
-                <a href="{{ url_for('handle_form', form_id='4') }}" class="list-group-item list-group-item-action">
-                    Assessment Type 4
-                </a>
-            </div>
-
-
-
-
-              <h2 class="mb-3">Previous Assessments</h2>
-      <table>
-    <!--<caption>People</caption>-->
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Assessment</th>
-        <th>Observer</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in submissions %}
-        <tr>
-        <td data-label="Date">{{ row['submitted'] }}</td>
-        <td data-label="Assessment">{{ row['description'] }}</td>
-            <!--observer doesn't work currently - not passed to table-->
-        <td data-label="Observer">{{ row['observer'] }}</td>
-          </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
+      <div class="col-md-8 offset-md-2">
+        <h2 class="mb-3">Select an Assessment Type</h2>
+        <div class="list-group mb-4">
+          <a href="{{ url_for('handle_form', form_id='1') }}" class="list-group-item list-group-item-action">
+            Assessment Type 1
+          </a>
+          <a href="{{ url_for('handle_form', form_id='2') }}" class="list-group-item list-group-item-action">
+            Assessment Type 2
+          </a>
+          <a href="{{ url_for('handle_form', form_id='3') }}" class="list-group-item list-group-item-action">
+            Assessment Type 3
+          </a>
+          <a href="{{ url_for('handle_form', form_id='4') }}" class="list-group-item list-group-item-action">
+            Assessment Type 4
+          </a>
         </div>
+
+
+
+
+        <h2 class="mb-3">Previous Assessments</h2>
+        <table class="striped, hoverable">
+    <!--<caption>People</caption>-->
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Assessment</th>
+              <th>Observer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in submissions %}
+            <tr data-form-id="{{ row['submission_id'] }}">
+                <td data-label="Date">{{ row['submitted'] }}</td>
+                <td data-label="Assessment">{{ row['description'] }}</td>
+            <!--observer doesn't work currently - not passed to table-->
+                <td data-label="Observer">{{ row['observer'] }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}
 
+
+{% block extra_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tableBody = document.querySelector('table tbody');
+      tableBody.addEventListener('click', function(e) {
+        const row = e.target.closest('tr');
+        if (row) {
+          const formId = row.dataset.formId;
+          window.location.href = `/view/${formId}`;
+        }
+      });
+    });
+  </script>
+{% endblock %}

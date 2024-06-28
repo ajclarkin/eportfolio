@@ -41,3 +41,19 @@
 </div>
 {% endblock %}
 
+
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.querySelector('table tbody');
+    tableBody.addEventListener('click', function(e) {
+      const row = e.target.closest('tr');
+      if (row) {
+        const formId = row.dataset.formId;
+        window.location.href = `/form-details/${formId}`;
+      }
+    });
+  });
+</script>
+{% endblock %}

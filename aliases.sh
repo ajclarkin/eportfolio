@@ -6,6 +6,7 @@
 alias up='docker compose up'
 alias down='docker compose down'
 alias upd='docker compose up -d'
+alias r='docker compose restart'
 
 # SQLite alias
 alias s='sqlite3 data/data.db'
@@ -14,5 +15,6 @@ echo "Aliases have been set up for the current session:"
 echo "  up    => docker compose up"
 echo "  down  => docker compose down"
 echo "  upd   => docker compose up -d"
+echo "  r   => docker compose restart"
 echo "  s     => sqlite3 data/data.db"
 

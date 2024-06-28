@@ -123,7 +123,49 @@ def handle_form(form_id):
 
 
 
+@app.route('/view/<int:form_id>')
+def display_form(form_id):
+    groups = [g for g in request.headers.get('Remote-Groups').split(',')]
+    if 'eportfolio-user' not in groups:
+#    if 'user_id' not in session:
+#        return redirect(url_for('login'))
+        return "You're not logged in"
 
+    user = request.headers.get('Remote-User')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Get form details
+    cursor.execute("""
+        SELECT * FROM FormSubmissions
+        WHERE id = ? AND trainee_id = ?
+    """, (form_id, user))
+    form = cursor.fetchone()
+
+    if not form:
+        conn.close()
+        return "Form not found", 404
+
+    # Get form fields and their most recent values
+    cursor.execute("""
+        with formfields as (
+            select row_number() over (partition by field_id order by id desc) as rowno
+            , id, field_id, value 
+            from fieldvalues where submission_id = ?
+        ) 
+        select f.label, ff.value 
+        from formfields ff 
+            inner join fields f on f.field_id = ff.field_id and rowno = 1 
+        order by ff.field_id
+
+    """, (form_id,))
+    
+    fields = cursor.fetchall()
+
+    conn.close()
+
+    return render_template('display_form.html', fields=fields)
 
 
 
