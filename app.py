@@ -187,6 +187,16 @@ def index():
         submissions = cursor.fetchall()
         conn.close()
         return render_template('usermenu.html', submissions=submissions)
+    elif 'rota-user' in groups:
+        return "Ok, seems like you are logged in"
+        # conn = get_db_connection()
+        # cursor = conn.cursor()
+        # observer = cursor.execute('''
+        #     select username, email, fullname from users where username = ? 
+        #     and (expiry_date > current_date() or expiry_date is null)
+        # ''', (user,)).fetchone()
+        # return render_template(observer_menu.html)
+        # pass
     else:
         return "Access denied. You must be an eportfolio user to view this page."
 

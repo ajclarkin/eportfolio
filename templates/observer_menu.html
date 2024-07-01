@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class = "row">
+      <h3>Requested Assessments</h3>
+
+      <table class="striped, hoverable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Assessment</th>
+            <th>Trainee</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in submissions %}
+          <tr data-form-id="{{ row['submission_id'] }}">
+            <td data-label="Date">{{ row['submitted'] }}</td>
+            <td data-label="Assessment">{{ row['description'] }}</td>
+            <!--observer doesn't work currently - not passed to table-->
+            <td data-label="Observer">{{ row['trainee'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+{% endblock %}
+
+
+{% block extra_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tableBody = document.querySelector('table tbody');
+      tableBody.addEventListener('click', function(e) {
+        const row = e.target.closest('tr');
+        if (row) {
+          const formId = row.dataset.formId;
+          window.location.href = `/view/${formId}`;
+        }
+      });
+    });
+  </script>
+{% endblock %}
