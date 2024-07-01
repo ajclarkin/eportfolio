@@ -2,12 +2,19 @@
 
 
 {% block content %}
+<div class="row cols-sm-12">
+  <h2>Workplace Assessment Title</h3>
 
   {% for row in fields %}
 
-    <h3> {{ row['label'] }} </h3>
-    <p> {{ row['value'] }}</p>
+  <div class="col-sm-12">
+    <div class="card fluid">
+      <h4> {{ row['label'] }} </h4>
+      <p> {{ row['value'] }}</p>
 
+    </div>
+  </div>
   {% endfor %}
+</div>
 
 {% endblock %}
