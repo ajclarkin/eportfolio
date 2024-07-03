@@ -39,7 +39,7 @@
             <td data-label="Date">{{ row['submitted'] }}</td>
             <td data-label="Assessment">{{ row['description'] }}</td>
             <!--observer doesn't work currently - not passed to table-->
-            <td data-label="Observer">{{ row['observer'] }}</td>
+            <td data-label="Observer">{{ row['fullname'] }}</td>
           </tr>
           {% endfor %}
         </tbody>

@@ -179,9 +179,10 @@ def index():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT fs.id as submission_id, strftime('%d-%m-%Y', fs.created_at) as submitted, f.description
+            SELECT fs.id as submission_id, strftime('%d-%m-%Y', fs.created_at) as submitted, f.description, u.fullname
             FROM FormSubmissions fs
             INNER JOIN Forms f ON fs.form_id = f.form_id
+            INNER JOIN Users u ON u.id = fs.observer_id
             WHERE fs.trainee_id = ?
         ''', (user,))
         submissions = cursor.fetchall()
