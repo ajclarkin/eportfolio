@@ -1,56 +1,45 @@
 {% extends "base.html" %}
-
 {% block content %}
-  <h3>{{ form_config.name }}</h3>
-  <!-- <p>{{ form_config.description }}</p> -->
-
-  <form method="POST">
-    <fieldset>
-      <legend>{{ form_config.description }}</legend>
-    {{ form.hidden_tag() }}
-
-    <div class="row">
-      <div class="col-sm-12 col-md-12 col-lg-12">
-        {{ form.observer_id.label(class="label") }}
-        {{ form.observer_id(class="input") }}
-      </div>
-    </div>
-
-    {% for field in form %}
-    {% if field.name != 'csrf_token' and field.name != 'trainee_id' and field.name != 'observer_id' %}
-    <div class="row">
-
-      <div class="col-sm-12 col-md-12 col-lg-12">
-            <div class="input-group vertical">
-
-          {{ field.label(class="label") }}
-
-          {% if field.type == 'TextAreaField' %}
-          {{ field(class="input", rows=4) }}
-          {% elif field.type == 'SelectField' %}
-          {{ field(class="select") }}
-          {% else %}
-          {{ field(class="input") }}
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    {% endif %}
-    {% endfor %}
-
-    <div class="row">
-      <div class="col-sm-12">
-        <input type="submit" value="Submit" class="button primary">
-      </div>
-    </div>
-    </fieldset>
-  </form>
-  {% endblock %}
-
-
-
-  {% block extra_js %}
-  <script>
+    <!-- <h3>{{ form_config.name }}</h3> -->
+    <!-- <p>{{ form_config.description }}</p> -->
+    <form method="POST">
+        <fieldset>
+            <legend>{{ form_config.description }}</legend>
+            {{ form.hidden_tag() }}
+            <div class="row">
+                <div class="col-sm-12 col-md-12 col-lg-12">
+                    {{ form.observer_id.label(class="label") }}
+                    {{ form.observer_id(class="input") }}
+                </div>
+            </div>
+            {% for field in form %}
+                {% if field.name != 'csrf_token' and field.name != 'trainee_id' and field.name != 'observer_id' %}
+                    <div class="row">
+                        <div class="col-sm-12 col-md-12 col-lg-12">
+                            <div class="input-group vertical">
+                                {{ field.label(class="label") }}
+                                {% if field.type == 'TextAreaField' %}
+                                    {{ field(class="input", rows=4) }}
+                                {% elif field.type == 'SelectField' %}
+                                    {{ field(class="select") }}
+                                {% else %}
+                                    {{ field(class="input") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+            <div class="row">
+                <div class="col-sm-12">
+                    <input type="submit" value="Submit" class="button primary">
+                </div>
+            </div>
+        </fieldset>
+    </form>
+{% endblock %}
+{% block extra_js %}
+    <script>
   document.addEventListener('DOMContentLoaded', function() {
   const tableBody = document.querySelector('table tbody');
   tableBody.addEventListener('click', function(e) {
@@ -61,5 +50,5 @@
   }
   });
   });
-  </script>
-  {% endblock %}
+    </script>
+{% endblock %}
