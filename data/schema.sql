@@ -1,4 +1,3 @@
--- Users table
 CREATE TABLE Users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -10,8 +9,6 @@ CREATE TABLE Users (
     created_at DATE DEFAULT CURRENT_DATE,
     updated_at DATE DEFAULT CURRENT_DATE
 );
-
--- Forms table
 CREATE TABLE Forms (
     form_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -19,8 +16,6 @@ CREATE TABLE Forms (
     created_at DATE DEFAULT CURRENT_DATE,
     updated_at DATE DEFAULT CURRENT_DATE
 );
-
--- Fields table
 CREATE TABLE Fields (
     field_id INTEGER PRIMARY KEY AUTOINCREMENT,
     form_id INTEGER NOT NULL,
@@ -33,11 +28,10 @@ CREATE TABLE Fields (
     validation_rules TEXT,
     FOREIGN KEY (form_id) REFERENCES Forms(form_id)
 );
-
--- FormSubmissions table
 CREATE TABLE FormSubmissions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     form_id INTEGER NOT NULL,
+    authcode TEXT,
     trainee_id INTEGER NOT NULL,
     observer_id INTEGER NOT NULL,
     status BOOLEAN DEFAULT 0,
@@ -47,8 +41,6 @@ CREATE TABLE FormSubmissions (
     FOREIGN KEY (trainee_id) REFERENCES Users(id),
     FOREIGN KEY (observer_id) REFERENCES Users(id)
 );
-
--- FieldValues table
 CREATE TABLE FieldValues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     submission_id INTEGER NOT NULL,
@@ -57,11 +49,8 @@ CREATE TABLE FieldValues (
     FOREIGN KEY (submission_id) REFERENCES FormSubmissions(id),
     FOREIGN KEY (field_id) REFERENCES Fields(field_id)
 );
-
--- Create indexes for better query performance
 CREATE INDEX idx_form_submissions_form_id ON FormSubmissions(form_id);
 CREATE INDEX idx_form_submissions_trainee_id ON FormSubmissions(trainee_id);
 CREATE INDEX idx_form_submissions_observer_id ON FormSubmissions(observer_id);
 CREATE INDEX idx_field_values_submission_id ON FieldValues(submission_id);
 CREATE INDEX idx_field_values_field_id ON FieldValues(field_id);
-
